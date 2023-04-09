@@ -39,7 +39,7 @@ double distance(double x1, double y1, double x2, double y2) {
   return sqrt((x2-x1)*(x2-x1)+(y2-y1)*(y2-y1));
 }
 
-// Calculate closest waypoint to current x, y position
+// Calculate closest waypoint to current x, y position. Includes previous way points
 int ClosestWaypoint(double x, double y, const vector<double> &maps_x, 
                     const vector<double> &maps_y) {
   double closestLen = 100000; //large number
@@ -82,6 +82,7 @@ int NextWaypoint(double x, double y, double theta, const vector<double> &maps_x,
 }
 
 // Transform from Cartesian x,y coordinates to Frenet s,d coordinates
+// Can use as a blackbox. maps_x and maps_y parameters are given from default values
 vector<double> getFrenet(double x, double y, double theta, 
                          const vector<double> &maps_x, 
                          const vector<double> &maps_y) {
@@ -127,6 +128,7 @@ vector<double> getFrenet(double x, double y, double theta,
 }
 
 // Transform from Frenet s,d coordinates to Cartesian x,y
+// maps_s, maps_x, maps_y is calculated internally
 vector<double> getXY(double s, double d, const vector<double> &maps_s, 
                      const vector<double> &maps_x, 
                      const vector<double> &maps_y) {

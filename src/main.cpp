@@ -1,6 +1,7 @@
 #include <uWS/uWS.h>
 #include <fstream>
 #include <iostream>
+#include <algorithm>
 #include <string>
 #include <vector>
 #include "Eigen-3.3/Eigen/Core"
@@ -110,30 +111,61 @@ int main() {
         
           // ------- COLLISION AVOIDANCE WITH FORWARD VEHICLE -------
           bool too_close = false; // True if too close to a car in front
+          
+          vector<double> lane_costs = {0,0,0}; // Cost of moving into each lane. left, middle, right
+          // Penalty for moving into non-existent lane?
+          for (int i = 0; i<lane_costs.size(); i++){
+            if (i==lane){ // current lane, differential
+              continue; // No intial cost for staying in current lane
+            }
+            else{
+              lane_costs[i] += 10; // Penalty to move to another lane
+            }
+          }
+          lane_costs[1] -=2; // Aim to move into middle lane
+
+          int left_lane = lane-1;
+          int right_lane = lane+1;
           // Find ref_v to use
           for (int i = 0; i < sensor_fusion.size(); i++) {
             // Check if the car [i] is in the same lane as the ego vehicle
             float d = sensor_fusion[i][6];
-            if (d < (2+4*lane+2) && d > (2+4*lane-2)){
+            if (d < (2+4*lane+2) && d > (2+4*lane-2)){ // other car is in current lane
               double vx = sensor_fusion[i][3];
               double vy = sensor_fusion[i][4];
               double check_speed = sqrt(vx*vx + vy*vy);
-              double check_car_s = sensor_fusion[i][5];
-              
+              double check_car_s = sensor_fusion[i][5];    
               // Calculate the check_car's future location
               check_car_s += (double)prev_size * 0.02 * check_speed;
               // If the check_car is within 30 meters in front, reduce ref_vel so that we don't hit it
               if (check_car_s > car_s && (check_car_s - car_s) < 30){
                 too_close = true; // ego car is too close to car in front
-                //TODO: add logic to try and change lanes here
-                // if (lane>0){
-                //   lane = 0; // change lane
-                     // Spline interpolation handles smoothly changing to desired lane
-                // }
+                lane_costs[lane] = 10; // Want to move out of this lane if possible
+              } 
+            }
+            if (left_lane>=0 && (d < (2+4*left_lane+2) && d > (2+4*left_lane-2))){ // traffic_car is in a valid lane, 1 lane left of us
+              double vx = sensor_fusion[i][3];
+              double vy = sensor_fusion[i][4];
+              double check_speed = sqrt(vx*vx + vy*vy);
+              double check_car_s = sensor_fusion[i][5];    
+              // Calculate the check_car's future location
+              check_car_s += (double)prev_size * 0.02 * check_speed;
+
+              if ((check_car_s > car_s && (check_car_s - car_s) > 30) || // If the traffic_car is more than 30 meters in front, 
+                  (check_car_s < car_s && (car_s - check_car_s) > 10)    // or more than 10 meters behind
+                  ){
+                    // safe to move left 1 lane
+                    lane_costs[left_lane]-=1;
               } 
             }
           }
-          
+          // Get minimum cost lane
+          int lane_to_move_into = std::min_element(lane_costs.begin(),lane_costs.end()) - lane_costs.begin();
+          std::cout << "Left:" << lane_costs[0] << " Middle:" << lane_costs[1] << " Right:" << lane_costs[2] << std::endl;
+          std::cout << "Min Cost Lane:" << lane_to_move_into << std::endl << std::endl;
+
+          lane = lane_to_move_into; // Spline interpolation handles smoothly changing to desired lane
+
           // ------- SMOOTH TRAJECTORY GENERATION -------
           // Create a list of evenly spaced waypoints 30m apart
           // Interpolate those waypoints later with spline and fill it in with more points

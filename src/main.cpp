@@ -122,8 +122,7 @@ int main() {
             else{
               lane_costs[i] += 1; // Penalty to move to another lane
             }
-          }          
-          // lane_costs[1] += -1; // Aim to move into middle lane
+          }
 
           // Penalty for extreme lanes
           if (lane==0){ // currently in left lane
@@ -161,9 +160,7 @@ int main() {
               // Calculate the check_car's future location
               check_car_s += (double)prev_size * 0.02 * check_speed;
 
-              if ((check_car_s > car_s && (check_car_s - car_s) < 10) || // If the traffic_car is ahead and within 5 meters
-                  false
-                  ){
+              if ((check_car_s > car_s && (check_car_s - car_s) < 20)){ // If the traffic_car is ahead and within 20 meters
                     lane_costs[left_lane] += 100; // Don't want to move into lane with possible collision
               } 
             }
@@ -176,9 +173,7 @@ int main() {
               // Calculate the check_car's future location
               check_car_s += (double)prev_size * 0.02 * check_speed;
 
-              if ((check_car_s > car_s && (check_car_s - car_s) < 10) || // If the traffic_car is ahead and within 5 meters
-                  false
-                  ){
+              if ((check_car_s > car_s && (check_car_s - car_s) < 20)){ // If the traffic_car is ahead and within 20 meters
                     lane_costs[right_lane] += 100; // Don't want to move into lane with possible collision
               } 
             }

@@ -111,7 +111,7 @@ int main() {
         
           // ------- COLLISION AVOIDANCE WITH FORWARD VEHICLE -------
           bool too_close = false; // True if too close to a car in front
-          
+          int lane_to_move_into = lane;
           vector<double> lane_costs = {0,0,0}; // Cost of moving into each lane. left, middle, right
           
           // Penalty for switching lanes
@@ -127,10 +127,10 @@ int main() {
 
           // Penalty for extreme lanes
           if (lane==0){ // currently in left lane
-            lane_costs[2] += 10000; // Impossible to move into right-most lane
+            lane_costs[2] = 10000; // Impossible to move into right-most lane
           }
           else if (lane==2){ // currently in right lane
-            lane_costs[0] += 10000; // Impossible to move into left-most lane
+            lane_costs[0] = 10000; // Impossible to move into left-most lane
           }
 
           // Cost of lanes based on traffic cars
@@ -161,10 +161,10 @@ int main() {
               // Calculate the check_car's future location
               check_car_s += (double)prev_size * 0.02 * check_speed;
 
-              if ((check_car_s > car_s && (check_car_s - car_s) < 5) || // If the traffic_car is ahead and within 5 meters
-                  (check_car_s < car_s && (car_s - check_car_s) < 8)    // or the traffic_car is behind and within 8 meters
+              if ((check_car_s > car_s && (check_car_s - car_s) < 10) || // If the traffic_car is ahead and within 5 meters
+                  false
                   ){
-                    lane_costs[left_lane] += 2; // Don't want to move into lane with possible collision
+                    lane_costs[left_lane] += 100; // Don't want to move into lane with possible collision
               } 
             }
 
@@ -176,15 +176,15 @@ int main() {
               // Calculate the check_car's future location
               check_car_s += (double)prev_size * 0.02 * check_speed;
 
-              if ((check_car_s > car_s && (check_car_s - car_s) < 5) || // If the traffic_car is ahead and within 5 meters
-                  (check_car_s < car_s && (car_s - check_car_s) < 8)    // or the traffic_car is behind and within 8 meters
+              if ((check_car_s > car_s && (check_car_s - car_s) < 10) || // If the traffic_car is ahead and within 5 meters
+                  false
                   ){
-                    lane_costs[right_lane] += 2; // Don't want to move into lane with possible collision
+                    lane_costs[right_lane] += 100; // Don't want to move into lane with possible collision
               } 
             }
           }
-          // Get minimum cost lane
-          int lane_to_move_into = std::min_element(lane_costs.begin(),lane_costs.end()) - lane_costs.begin();
+          
+          lane_to_move_into = std::min_element(lane_costs.begin(),lane_costs.end()) - lane_costs.begin();
           std::cout << "Left:" << lane_costs[0] << " Middle:" << lane_costs[1] << " Right:" << lane_costs[2] << std::endl;
           std::cout << "Min Cost Lane:" << lane_to_move_into << std::endl << std::endl;
 

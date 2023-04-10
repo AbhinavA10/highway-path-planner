@@ -113,17 +113,27 @@ int main() {
           bool too_close = false; // True if too close to a car in front
           
           vector<double> lane_costs = {0,0,0}; // Cost of moving into each lane. left, middle, right
-          // Penalty for moving into non-existent lane?
+          
+          // Penalty for switching lanes
           for (int i = 0; i<lane_costs.size(); i++){
             if (i==lane){ // current lane, differential
-              continue; // No intial cost for staying in current lane
+              continue; // No penalty for staying in current lane
             }
             else{
-              lane_costs[i] += 10; // Penalty to move to another lane
+              lane_costs[i] += 1; // Penalty to move to another lane
             }
-          }
-          lane_costs[1] -=2; // Aim to move into middle lane
+          }          
+          // lane_costs[1] += -1; // Aim to move into middle lane
 
+          // Penalty for extreme lanes
+          if (lane==0){ // currently in left lane
+            lane_costs[2] += 10000; // Impossible to move into right-most lane
+          }
+          else if (lane==2){ // currently in right lane
+            lane_costs[0] += 10000; // Impossible to move into left-most lane
+          }
+
+          // Cost of lanes based on traffic cars
           int left_lane = lane-1;
           int right_lane = lane+1;
           // Find ref_v to use
@@ -137,25 +147,39 @@ int main() {
               double check_car_s = sensor_fusion[i][5];    
               // Calculate the check_car's future location
               check_car_s += (double)prev_size * 0.02 * check_speed;
-              // If the check_car is within 30 meters in front, reduce ref_vel so that we don't hit it
-              if (check_car_s > car_s && (check_car_s - car_s) < 30){
+              if (check_car_s > car_s && (check_car_s - car_s) < 30){ // If the traffic_car is ahead and within 30 meters
                 too_close = true; // ego car is too close to car in front
-                lane_costs[lane] = 10; // Want to move out of this lane if possible
+                lane_costs[lane] += 5; // Want to move out of this lane if possible
               } 
             }
+
             if (left_lane>=0 && (d < (2+4*left_lane+2) && d > (2+4*left_lane-2))){ // traffic_car is in a valid lane, 1 lane left of us
               double vx = sensor_fusion[i][3];
               double vy = sensor_fusion[i][4];
               double check_speed = sqrt(vx*vx + vy*vy);
-              double check_car_s = sensor_fusion[i][5];    
+              double check_car_s = sensor_fusion[i][5];
               // Calculate the check_car's future location
               check_car_s += (double)prev_size * 0.02 * check_speed;
 
-              if ((check_car_s > car_s && (check_car_s - car_s) > 30) || // If the traffic_car is more than 30 meters in front, 
-                  (check_car_s < car_s && (car_s - check_car_s) > 10)    // or more than 10 meters behind
+              if ((check_car_s > car_s && (check_car_s - car_s) < 5) || // If the traffic_car is ahead and within 5 meters
+                  (check_car_s < car_s && (car_s - check_car_s) < 8)    // or the traffic_car is behind and within 8 meters
                   ){
-                    // safe to move left 1 lane
-                    lane_costs[left_lane]-=1;
+                    lane_costs[left_lane] += 2; // Don't want to move into lane with possible collision
+              } 
+            }
+
+            if (right_lane<=2 && (d < (2+4*right_lane+2) && d > (2+4*right_lane-2))){ // traffic_car is in a valid lane, 1 lane right of us
+              double vx = sensor_fusion[i][3];
+              double vy = sensor_fusion[i][4];
+              double check_speed = sqrt(vx*vx + vy*vy);
+              double check_car_s = sensor_fusion[i][5];       
+              // Calculate the check_car's future location
+              check_car_s += (double)prev_size * 0.02 * check_speed;
+
+              if ((check_car_s > car_s && (check_car_s - car_s) < 5) || // If the traffic_car is ahead and within 5 meters
+                  (check_car_s < car_s && (car_s - check_car_s) < 8)    // or the traffic_car is behind and within 8 meters
+                  ){
+                    lane_costs[right_lane] += 2; // Don't want to move into lane with possible collision
               } 
             }
           }

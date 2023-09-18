@@ -1,5 +1,5 @@
-# CarND-Path-Planning-Project
-Highway Path Planner project from Udacity Self-Driving Car Engineer Nanodegree Program
+# Highway-path-planner
+Highway Path Planner project from Udacity Self-Driving Car Engineer Nanodegree Program: "CarND-Path-Planning-Project"
 
 [![](./animation.gif)](https://youtu.be/QPADe4BpJAs)
 
